@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/DavidCarl/docking/config"
+	"github.com/DavidCarl/docking/logging"
 )
 
 // Screens holds the screens in the dock
@@ -14,17 +15,18 @@ var screens []string
 
 // Run This starts the chaos!
 func Run() {
-	screens = getConnectedMonitors()
+	screens = getMonitors(" connected")
 	modeInt := config.FindMostLikelyConfig(screens)
-	// fmt.Println(modeInt)
 	setupMonitors(modeInt)
+	disableMonitors(modeInt)
 }
 
-func getConnectedMonitors() []string {
+func getMonitors(state string) []string {
+	logging.Write("getMonitors " + state)
 	var output bytes.Buffer
 
-	c1 := exec.Command("xrandr", "--query")
-	c2 := exec.Command("grep", " connected")
+	c1 := exec.Command("xrandr", "-d", ":0.0", "--query")
+	c2 := exec.Command("grep", state)
 	c3 := exec.Command("cut", "-d ", "-f1")
 	c2.Stdin, _ = c1.StdoutPipe()
 	c3.Stdin, _ = c2.StdoutPipe()
@@ -38,23 +40,20 @@ func getConnectedMonitors() []string {
 	return strings.Split(output.String(), "\n")
 }
 
-// setupMonitors Needs to generate strings like this:
-// xrandr --auto --output DVI-0 --mode 1440x900 --right-of DVI-1
-func setupMonitors(modeInt int) {
-	monitorName := make([]string, (len(screens) - 1))
-	monitorResolution := make([]string, (len(screens) - 1))
-	monitorActive := make([]bool, (len(screens) - 1))
-	baseCommand := "xrandr --auto --output "
-	resolutionCommand := " --mode "
-
-	for i := 0; i < (len(screens) - 1); i++ {
-		// fmt.Println(screens[i])
-		monitorName[i], monitorResolution[i], monitorActive[i] = config.MonitorSetting(modeInt, screens[i])
+func xrandrCommand(command string) bool {
+	logging.Write("xrandrCommand " + command)
+	parts := strings.Split(command, " ")
+	head := parts[0]
+	args := parts[1:len(parts)]
+	cmd := exec.Command(head, args...)
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return false
 	}
-
-	for i := 0; i < (len(screens) - 1); i++ {
-		if monitorActive[i] {
-			fmt.Println(baseCommand + monitorName[i] + resolutionCommand + monitorResolution[i])
-		}
-	}
+	return true
 }
