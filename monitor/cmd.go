@@ -42,6 +42,7 @@ func getMonitors(state string) []string {
 
 func xrandrCommand(command string) bool {
 	logging.Write("xrandrCommand " + command)
+	// fmt.Println(command)
 	parts := strings.Split(command, " ")
 	head := parts[0]
 	args := parts[1:len(parts)]

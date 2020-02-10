@@ -102,10 +102,11 @@ func FindMostLikelyConfig(sArray []string) int {
 }
 
 // MonitorSetting this should setting values!
-func MonitorSetting(mode int, screenName string) (string, string, bool) {
+func MonitorSetting(mode int, screenName string) (string, string, string, bool) {
 	var rtnName string
 	var rtnResolution string
 	var rtnMode bool
+	var rtnPosition string
 	config := loadJSONConfig()
 
 	for range config.Modes {
@@ -114,11 +115,12 @@ func MonitorSetting(mode int, screenName string) (string, string, bool) {
 				rtnName = config.Modes[mode].Monitors[index].Name
 				rtnResolution = config.Modes[mode].Monitors[index].Resolution
 				rtnMode = config.Modes[mode].Monitors[index].Mode
+				rtnPosition = config.Modes[mode].Monitors[index].Position
 				break
 			}
 		}
 	}
 
 	// fmt.Println(rtnValue)
-	return rtnName, rtnResolution, rtnMode
+	return rtnName, rtnResolution, rtnPosition, rtnMode
 }
